@@ -264,8 +264,8 @@ html, body{
   </div>
 
   <div class="controls">
-    <div class="legend">Semakin besar angka, semakin terang warnanya.<br>Tetap hidup selama mungkin — tak ada batas atas.</div>
-    <button class="btn ghost" id="restartBtn">Ulang</button>
+    <div class="legend">The higher the number, brighter the color..<br>Stay alive as long as possible — there is no upper limit..</div>
+    <button class="btn ghost" id="restartBtn">Restart</button>
   </div>
 </div>
 
@@ -391,7 +391,7 @@ html, body{
     busy = false;
     idCounter = 1;
     overlay.classList.remove('show');
-    hintEl.textContent = 'Geser / panah untuk gabungkan angka';
+    hintEl.textContent = 'Swipe / use arrows to merge numbers.';
     updateScore();
 
     const spawn1 = addRandomTile(grid);
