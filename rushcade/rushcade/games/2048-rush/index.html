@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>2048 Rush — 2048 Endless Mode</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
+
+:root{
+  --bg: #14101d;
+  --panel: #1e1730;
+  --panel-edge: #2b2140;
+  --cell: #241b38;
+  --cream: #f3ece2;
+  --muted: #9a8fb5;
+  --accent: #ff6b6b;
+  --good: #5ee8b5;
+}
+
+*{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body{
+  margin:0; padding:0;
+  background: radial-gradient(circle at 20% 0%, #241c38 0%, #14101d 55%, #0d0a15 100%);
+  color: var(--cream);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+  display:flex;
+  justify-content:center;
+  overflow-x:hidden;
+}
+
+.wrap{
+  width: 100%;
+  max-width: 480px;
+  padding: 28px 18px 60px;
+}
+
+.top{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  margin-bottom: 18px;
+}
+
+.title{
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -1px;
+  margin:0;
+  background: linear-gradient(120deg, #ff6b6b 0%, #ffb347 30%, #ffe66d 55%, #a78bfa 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.title span{
+  display:block;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  color: var(--muted);
+  -webkit-text-fill-color: var(--muted);
+  margin-top: 4px;
+}
+
+.scores{
+  display:flex;
+  gap:8px;
+}
+.score-box{
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 12px;
+  padding: 8px 14px;
+  text-align:center;
+  min-width: 68px;
+}
+.score-box .label{
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.score-box .value{
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 20px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom: 14px;
+}
+.hint{
+  font-size: 12px;
+  color: var(--muted);
+}
+.combo{
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--good);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.combo.show{ opacity: 1; transform: translateY(0); }
+
+.board-frame{
+  position: relative;
+  background: var(--panel);
+  border-radius: 18px;
+  padding: 10px;
+  border: 1px solid var(--panel-edge);
+  box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+}
+
+.board{
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  touch-action: none;
+}
+
+.cell-bg{
+  background: var(--cell);
+  border-radius: 12px;
+}
+
+.tile{
+  position: absolute;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  will-change: transform, left, top;
+  user-select: none;
+  transition: left .12s cubic-bezier(.35,.0,.25,1), top .12s cubic-bezier(.35,.0,.25,1);
+}
+
+.tile.pop{
+  animation: pop .16s ease;
+}
+@keyframes pop{
+  0%{ transform: scale(1); }
+  50%{ transform: scale(1.18); }
+  100%{ transform: scale(1); }
+}
+.tile.new{
+  animation: spawn .16s ease;
+}
+@keyframes spawn{
+  0%{ transform: scale(0.3); opacity: 0; }
+  100%{ transform: scale(1); opacity: 1; }
+}
+
+.overlay{
+  position:absolute;
+  inset:0;
+  background: rgba(20, 16, 29, 0.88);
+  border-radius: 18px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+  z-index: 5;
+  text-align:center;
+  padding: 20px;
+}
+.overlay.show{ opacity: 1; pointer-events: all; }
+.overlay h2{
+  font-size: 28px;
+  margin: 0;
+}
+.overlay p{
+  color: var(--muted);
+  margin: 0;
+  font-size: 14px;
+}
+
+.btn{
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  background: linear-gradient(120deg, #ff6b6b, #ffb347);
+  color: #1a1224;
+  border: none;
+  padding: 12px 26px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: transform .1s ease;
+}
+.btn:active{ transform: scale(0.96); }
+.btn.ghost{
+  background: transparent;
+  border: 1px solid var(--panel-edge);
+  color: var(--cream);
+}
+
+.controls{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top: 20px;
+}
+
+.legend{
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 380px){
+  .title{ font-size: 36px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 class="title">DUA X<span>2048 &middot; MODE ENDLESS</span></h1>
+    </div>
+    <div class="scores">
+      <div class="score-box">
+        <div class="label">Skor</div>
+        <div class="value" id="score">0</div>
+      </div>
+      <div class="score-box">
+        <div class="label">Terbaik</div>
+        <div class="value" id="best">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="hint" id="hint">Swipe to merge numbers. Reach 2048!</div>
+    <div class="combo" id="combo">COMBO x2</div>
+  </div>
+
+  <div class="board-frame">
+    <div class="board" id="board">
+      <div class="overlay" id="overlay">
+        <h2 id="overlayTitle">Game Over</h2>
+        <p id="overlayText">Skor akhir kamu tercatat di atas.</p>
+        <button class="btn" id="overlayBtn">Main Lagi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="legend">Semakin besar angka, semakin terang warnanya.<br>Tetap hidup selama mungkin — tak ada batas atas.</div>
+    <button class="btn ghost" id="restartBtn">Ulang</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const SIZE = 4;
+  const board = document.getElementById('board');
+  const overlay = document.getElementById('overlay');
+  const overlayTitle = document.getElementById('overlayTitle');
+  const overlayText = document.getElementById('overlayText');
+  const overlayBtn = document.getElementById('overlayBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+  const comboEl = document.getElementById('combo');
+  const hintEl = document.getElementById('hint');
+
+  const SLIDE_MS = 120;
+  const POP_MS = 160;
+
+  let grid = [];
+  let score = 0;
+  let best = 0;
+  let won = false;
+  let busy = false;
+  let idCounter = 1;
+  let comboTimer = null;
+
+  const tileEls = {}; // id -> dom element
+
+  for(let i=0;i<SIZE*SIZE;i++){
+    const d = document.createElement('div');
+    d.className = 'cell-bg';
+    board.appendChild(d);
+  }
+
+  function tileColor(value){
+    const idx = Math.max(0, Math.round(Math.log2(value)) - 1);
+    const hue = (355 - idx * 26 + 360) % 360;
+    const light = Math.min(38 + idx * 3.4, 72);
+    const sat = 72;
+    const bg = `hsl(${hue}, ${sat}%, ${light}%)`;
+    const textLight = light > 55 ? 14 : 96;
+    const text = `hsl(${hue}, 30%, ${textLight}%)`;
+    return {bg, text};
+  }
+
+  function emptyGrid(){
+    const g = [];
+    for(let r=0;r<SIZE;r++) g.push(new Array(SIZE).fill(null));
+    return g;
+  }
+
+  function cloneGrid(g){
+    return g.map(row => row.map(cell => cell ? {...cell} : null));
+  }
+
+  function getMetrics(){
+    const rect = board.getBoundingClientRect();
+    const gap = 10;
+    const cellSize = (rect.width - gap*(SIZE-1)) / SIZE;
+    return { cellSize, gap };
+  }
+
+  function posFor(r, c){
+    const { cellSize, gap } = getMetrics();
+    return { left: c * (cellSize + gap), top: r * (cellSize + gap), size: cellSize };
+  }
+
+  function addRandomTile(g){
+    const empties = [];
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        if(!g[r][c]) empties.push([r,c]);
+      }
+    }
+    if(empties.length === 0) return null;
+    const [r,c] = empties[Math.floor(Math.random()*empties.length)];
+    const value = Math.random() < 0.9 ? 2 : 4;
+    const tile = { value, id: idCounter++ };
+    g[r][c] = tile;
+    return { r, c, tile };
+  }
+
+  function createTileEl(id, value, r, c, isNew){
+    const el = document.createElement('div');
+    el.className = 'tile' + (isNew ? ' new' : '');
+    const { left, top, size } = posFor(r, c);
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+    const colors = tileColor(value);
+    el.style.background = colors.bg;
+    el.style.color = colors.text;
+    el.style.fontSize = (value >= 1000 ? size*0.32 : size*0.4) + 'px';
+    el.textContent = value;
+    board.appendChild(el);
+    tileEls[id] = el;
+    return el;
+  }
+
+  function setTilePos(el, r, c){
+    const { left, top } = posFor(r, c);
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }
+
+  function updateTileValue(el, value, size){
+    const colors = tileColor(value);
+    el.style.background = colors.bg;
+    el.style.color = colors.text;
+    el.style.fontSize = (value >= 1000 ? size*0.32 : size*0.4) + 'px';
+    el.textContent = value;
+  }
+
+  function startGame(){
+    Object.values(tileEls).forEach(el => el.remove());
+    Object.keys(tileEls).forEach(k => delete tileEls[k]);
+    grid = emptyGrid();
+    score = 0;
+    won = false;
+    busy = false;
+    idCounter = 1;
+    overlay.classList.remove('show');
+    hintEl.textContent = 'Geser / panah untuk gabungkan angka';
+    updateScore();
+
+    const spawn1 = addRandomTile(grid);
+    const spawn2 = addRandomTile(grid);
+    if(spawn1) createTileEl(spawn1.tile.id, spawn1.tile.value, spawn1.r, spawn1.c, true);
+    if(spawn2) createTileEl(spawn2.tile.id, spawn2.tile.value, spawn2.r, spawn2.c, true);
+  }
+
+  function updateScore(){
+    scoreEl.textContent = score;
+    if(score > best){
+      best = score;
+      bestEl.textContent = best;
+    }
+  }
+
+  function showCombo(n){
+    if(n < 2) return;
+    comboEl.textContent = `COMBO x${n}`;
+    comboEl.classList.add('show');
+    clearTimeout(comboTimer);
+    comboTimer = setTimeout(()=> comboEl.classList.remove('show'), 900);
+  }
+
+  // slide one row (already in "left" orientation); returns new row of cells
+  // each cell: { value, id, loserId (id of tile absorbed into this one, or null) }
+  function slideRowLeft(row){
+    const filtered = row.filter(c => c !== null);
+    const result = [];
+    let gained = 0;
+    let merges = 0;
+    for(let i=0;i<filtered.length;i++){
+      if(i < filtered.length - 1 && filtered[i].value === filtered[i+1].value){
+        const newValue = filtered[i].value * 2;
+        result.push({ value: newValue, id: filtered[i+1].id, loserId: filtered[i].id });
+        gained += newValue;
+        merges++;
+        i++;
+      } else {
+        result.push({ value: filtered[i].value, id: filtered[i].id, loserId: null });
+      }
+    }
+    while(result.length < SIZE) result.push(null);
+    return { row: result, gained, merges };
+  }
+
+  function rotateGrid(g){
+    const newG = emptyGrid();
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        newG[c][SIZE-1-r] = g[r][c];
+      }
+    }
+    return newG;
+  }
+
+  function gridsEqual(a,b){
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        const av = a[r][c] ? a[r][c].value : null;
+        const bv = b[r][c] ? b[r][c].value : null;
+        if(av !== bv) return false;
+      }
+    }
+    return true;
+  }
+
+  function move(direction){
+    if(busy) return;
+
+    let rotations = 0;
+    if(direction === 'up') rotations = 3;
+    else if(direction === 'right') rotations = 2;
+    else if(direction === 'down') rotations = 1;
+    else rotations = 0;
+
+    // record where every current tile is right now (for animating slide)
+    const prevPos = {};
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        if(grid[r][c]) prevPos[grid[r][c].id] = { r, c };
+      }
+    }
+
+    let working = cloneGrid(grid);
+    for(let i=0;i<rotations;i++) working = rotateGrid(working);
+
+    let totalGained = 0;
+    let totalMerges = 0;
+    for(let r=0;r<SIZE;r++){
+      const { row, gained, merges } = slideRowLeft(working[r]);
+      working[r] = row;
+      totalGained += gained;
+      totalMerges += merges;
+    }
+
+    const backRotations = (4 - rotations) % 4;
+    for(let i=0;i<backRotations;i++) working = rotateGrid(working);
+
+    if(gridsEqual(working, grid)){
+      return; // nothing moved, ignore
+    }
+
+    // figure out final target positions + which ids merged into which
+    const finalPos = {};   // id -> {r,c}
+    const mergedInto = {}; // winnerId -> true (needs pop + value update after slide)
+    const loserTarget = {}; // loserId -> {r,c}
+
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        const cell = working[r][c];
+        if(!cell) continue;
+        finalPos[cell.id] = { r, c };
+        if(cell.loserId != null){
+          mergedInto[cell.id] = true;
+          loserTarget[cell.loserId] = { r, c };
+        }
+      }
+    }
+
+    busy = true;
+
+    // slide every existing tile element toward its destination
+    Object.keys(prevPos).forEach(idStr => {
+      const id = Number(idStr);
+      const el = tileEls[id];
+      if(!el) return;
+      if(finalPos[id]){
+        setTilePos(el, finalPos[id].r, finalPos[id].c);
+      } else if(loserTarget[id]){
+        setTilePos(el, loserTarget[id].r, loserTarget[id].c);
+      }
+    });
+
+    grid = working;
+    score += totalGained;
+    updateScore();
+    if(totalMerges >= 2) showCombo(totalMerges);
+
+    setTimeout(()=>{
+      // remove losers (tiles absorbed by a merge)
+      Object.keys(loserTarget).forEach(idStr => {
+        const id = Number(idStr);
+        const el = tileEls[id];
+        if(el){ el.remove(); delete tileEls[id]; }
+      });
+
+      // update winners: new value + pop animation
+      const { cellSize } = getMetrics();
+      Object.keys(mergedInto).forEach(idStr => {
+        const id = Number(idStr);
+        const el = tileEls[id];
+        if(!el) return;
+        const pos = finalPos[id];
+        const cell = working[pos.r][pos.c];
+        updateTileValue(el, cell.value, cellSize);
+        el.classList.remove('pop');
+        void el.offsetWidth;
+        el.classList.add('pop');
+      });
+
+      // spawn a new random tile
+      const spawned = addRandomTile(grid);
+      if(spawned){
+        createTileEl(spawned.tile.id, spawned.tile.value, spawned.r, spawned.c, true);
+      }
+
+      setTimeout(()=>{
+        busy = false;
+        checkWin();
+        checkGameOver();
+      }, POP_MS);
+    }, SLIDE_MS);
+  }
+
+  function checkWin(){
+    if(won) return;
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        if(grid[r][c] && grid[r][c].value >= 2048){
+          won = true;
+          overlayTitle.textContent = 'Kamu mencapai 2048!';
+          overlayText.textContent = 'Lanjut terus, papan tetap terbuka — cetak skor setinggi mungkin.';
+          overlayBtn.textContent = 'Lanjutkan';
+          overlay.classList.add('show');
+        }
+      }
+    }
+  }
+
+  function canMove(){
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        if(!grid[r][c]) return true;
+        const v = grid[r][c].value;
+        if(c < SIZE-1 && grid[r][c+1] && grid[r][c+1].value === v) return true;
+        if(r < SIZE-1 && grid[r+1][c] && grid[r+1][c].value === v) return true;
+      }
+    }
+    return false;
+  }
+
+  function checkGameOver(){
+    if(!canMove()){
+      overlayTitle.textContent = 'Game Over';
+      overlayText.textContent = `Skor akhir kamu: ${score}`;
+      overlayBtn.textContent = 'Main Lagi';
+      overlay.classList.add('show');
+    }
+  }
+
+  overlayBtn.addEventListener('click', ()=>{
+    if(won && overlayBtn.textContent === 'Lanjutkan'){
+      overlay.classList.remove('show');
+      return;
+    }
+    startGame();
+  });
+  restartBtn.addEventListener('click', startGame);
+
+  window.addEventListener('keydown', (e)=>{
+    const map = {
+      ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
+      a: 'left', d: 'right', w: 'up', s: 'down'
+    };
+    const dir = map[e.key];
+    if(dir){
+      e.preventDefault();
+      move(dir);
+    }
+  });
+
+  let touchStartX = 0, touchStartY = 0;
+  board.addEventListener('touchstart', (e)=>{
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+  }, {passive:true});
+
+  board.addEventListener('touchend', (e)=>{
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const absX = Math.abs(dx), absY = Math.abs(dy);
+    if(Math.max(absX, absY) < 24) return;
+    if(absX > absY){
+      move(dx > 0 ? 'right' : 'left');
+    } else {
+      move(dy > 0 ? 'down' : 'up');
+    }
+  }, {passive:true});
+
+  window.addEventListener('resize', ()=>{
+    // reposition all tiles instantly to match new board size
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        const cell = grid[r][c];
+        if(cell && tileEls[cell.id]) setTilePos(tileEls[cell.id], r, c);
+      }
+    }
+  });
+
+  startGame();
+})();
+</script>
+</body>
+</html>
