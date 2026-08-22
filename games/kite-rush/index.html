@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>KITE RUSH — Rushcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1F1533;
+    --panel: #2A1E45;
+    --panel-edge: #3B2A5E;
+    --marigold: #F2A93B;
+    --coral: #FF6B6B;
+    --mint: #7FE7C4;
+    --cream: #F5EFE6;
+    --muted: #B6ACC9;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      radial-gradient(circle at 20% 10%, rgba(242,169,59,0.10), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(127,231,196,0.08), transparent 45%),
+      var(--bg);
+    color:var(--cream);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:18px 14px 32px;
+  }
+  .backLink{
+    align-self:flex-start;
+    max-width:420px;
+    width:100%;
+    font-size:11px;
+    color:var(--muted);
+    text-decoration:none;
+    margin:0 auto 8px;
+  }
+  .backLink:hover{ color:var(--mint); }
+  h1{
+    font-family:'Press Start 2P', monospace;
+    font-size:15px;
+    letter-spacing:1px;
+    color:var(--marigold);
+    text-shadow:2px 2px 0 rgba(0,0,0,0.35);
+    margin:6px 0 4px;
+    text-align:center;
+  }
+  .tagline{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:16px;
+    text-align:center;
+  }
+
+  .stub{
+    background:var(--panel);
+    border:1.5px dashed var(--panel-edge);
+    border-radius:14px;
+    padding:12px 14px;
+    width:100%;
+    max-width:420px;
+    margin-bottom:12px;
+  }
+  .bestRow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .bestRow b{color:var(--cream);}
+
+  .walletRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid var(--panel-edge);
+    flex-wrap:wrap;
+  }
+  .walletRow p{
+    font-size:11px;
+    color:var(--muted);
+    margin:0;
+    max-width:230px;
+  }
+
+  button{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    border:none;
+    border-radius:10px;
+    padding:9px 14px;
+    cursor:pointer;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  button:active{transform:scale(0.96);}
+  button:disabled{ opacity:0.6; cursor:default; }
+  .btn-primary{background:var(--marigold); color:#1F1533;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{
+    background:transparent;
+    color:var(--muted);
+    border:1px solid var(--panel-edge);
+  }
+  .btn-sm{ padding:8px 12px; font-size:12px; white-space:nowrap; }
+
+  .stage{
+    position:relative;
+    width:100%;
+    max-width:420px;
+    aspect-ratio: 3 / 4;
+    border-radius:16px;
+    overflow:hidden;
+    border:2px solid var(--panel-edge);
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+    touch-action:none;
+  }
+
+  .overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    background:linear-gradient(180deg, rgba(31,21,51,0.55), rgba(31,21,51,0.9));
+    text-align:center;
+    padding:20px;
+    overflow-y:auto;
+  }
+  .overlay.hidden{display:none;}
+  .overlay h2{
+    font-family:'Press Start 2P', monospace;
+    font-size:14px;
+    color:var(--marigold);
+    margin:0;
+  }
+  .overlay p{font-size:12px; color:var(--muted); margin:0; max-width:280px;}
+
+  .scoreForm{
+    width:100%;
+    max-width:280px;
+    background:var(--panel);
+    border:1.5px solid var(--panel-edge);
+    border-radius:12px;
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    text-align:left;
+  }
+  .scoreForm.hidden{ display:none; }
+  .scoreForm .qualify{
+    font-size:11px;
+    color:var(--mint);
+    margin:0 0 2px;
+  }
+  .scoreForm label{
+    font-size:11px;
+    color:var(--muted);
+  }
+  .scoreForm input{
+    width:100%;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12px;
+    background:var(--bg);
+    border:1px solid var(--panel-edge);
+    border-radius:8px;
+    padding:8px 10px;
+    color:var(--cream);
+  }
+  .scoreForm input:focus{ outline:none; border-color:var(--mint); }
+  .formError{
+    font-size:11px;
+    color:var(--coral);
+    margin:0;
+    min-height:14px;
+  }
+  .formStatus{
+    font-size:11px;
+    color:var(--mint);
+    margin:0;
+    min-height:14px;
+  }
+  .formActions{
+    display:flex;
+    gap:8px;
+    margin-top:4px;
+  }
+  .formActions button{ flex:1; }
+
+  .toast{
+    position:fixed;
+    bottom:16px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    color:var(--mint);
+    font-size:12px;
+    padding:8px 14px;
+    border-radius:10px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease;
+    max-width:80%;
+    text-align:center;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+  <a class="backLink" href="../../">← Back to Rushcade</a>
+  <h1>KITE RUSH</h1>
+  <div class="tagline">Flap through the gaps and chase your high score</div>
+
+  <div class="stub">
+    <div class="bestRow">
+      <span>Best score</span>
+      <b id="bestScore">0</b>
+    </div>
+    <div class="walletRow">
+      <p>Score 50+ untuk buka form submit ke leaderboard.</p>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="game"></canvas>
+    <div class="overlay" id="overlay">
+      <h2>KITE RUSH</h2>
+      <p id="overlayText">Tap the screen or press space to flap. Dodge the pipes and beat your best score.</p>
+
+      <!-- Score submission form: shown only when score >= 50 on game over -->
+      <div class="scoreForm hidden" id="scoreForm">
+        <p class="qualify">🎉 Skor kamu memenuhi syarat leaderboard!</p>
+        <label for="walletInput">Alamat wallet</label>
+        <input type="text" id="walletInput" placeholder="0x1234...abcd">
+        <label for="retweetInput">Link bukti retweet</label>
+        <input type="text" id="retweetInput" placeholder="https://x.com/username/status/...">
+        <p class="formError" id="formError"></p>
+        <p class="formStatus" id="formStatus"></p>
+        <div class="formActions">
+          <button class="btn-ghost btn-sm" id="skipFormBtn" type="button">Lewati</button>
+          <button class="btn-primary btn-sm" id="submitScoreBtn" type="button">Submit Skor</button>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="startBtn">Start</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const overlay = document.getElementById('overlay');
+  const overlayText = document.getElementById('overlayText');
+  const startBtn = document.getElementById('startBtn');
+  const bestScoreEl = document.getElementById('bestScore');
+  const toastEl = document.getElementById('toast');
+
+  let W, H, DPR;
+  function resize(){
+    DPR = window.devicePixelRatio || 1;
+    W = stage.clientWidth;
+    H = stage.clientHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toastEl.classList.remove('show'), 2600);
+  }
+  window.__kiteRushShowToast = showToast;
+
+  // ---------- Progress (local, no wallet) ----------
+  let bestScore = 0;
+
+  function loadBest(){
+    try{
+      bestScore = parseInt(localStorage.getItem('kiterush-best') || '0', 10) || 0;
+    }catch(e){
+      bestScore = 0;
+    }
+    updateBestLabel();
+  }
+
+  function saveBest(score){
+    if(score > bestScore){
+      bestScore = score;
+      try{
+        localStorage.setItem('kiterush-best', String(bestScore));
+        showToast('New best score: ' + bestScore);
+      }catch(e){
+        showToast('Could not save score');
+      }
+      updateBestLabel();
+    }
+  }
+
+  function updateBestLabel(){
+    bestScoreEl.textContent = bestScore;
+  }
+
+  loadBest();
+
+  // ---------- Game ----------
+  const COLORS = {
+    sky1: '#2A1E45',
+    sky2: '#1F1533',
+    pipe: '#7FE7C4',
+    pipeEdge: '#4FBF9B',
+    kite: '#F2A93B',
+    kiteEdge: '#C97F1E',
+    ribbon: '#FF6B6B',
+    ground: '#150E27'
+  };
+
+  const DIFFICULTY = {
+    gravity: 0.36,
+    flap: -6.8,
+    gapSize: 0.28,
+    pipeSpeed: 2.3,
+    spawnEvery: 88
+  };
+
+  const QUALIFY_SCORE = 50;
+
+  let state = 'idle'; // idle | playing | over
+  let bird, pipes, score, frame, spawnTimer, ribbonTrail;
+  let animId = null;
+
+  function resetGame(){
+    bird = { x: W*0.28, y: H*0.45, vy: 0, r: Math.max(10, W*0.035) };
+    pipes = [];
+    score = 0;
+    frame = 0;
+    spawnTimer = 0;
+    ribbonTrail = [];
+  }
+
+  function spawnPipe(){
+    const gap = DIFFICULTY.gapSize * H;
+    const margin = H*0.12;
+    const gapY = margin + Math.random()*(H - margin*2 - gap);
+    pipes.push({ x: W + 30, w: Math.max(38, W*0.14), gapY, gap, passed:false });
+  }
+
+  function flap(){
+    if(state === 'idle'){
+      startGame();
+      return;
+    }
+    if(state === 'over') return;
+    bird.vy = DIFFICULTY.flap;
+  }
+
+  function startGame(){
+    resetGame();
+    state = 'playing';
+    overlay.classList.add('hidden');
+    loop();
+  }
+
+  function endGame(){
+    state = 'over';
+    cancelAnimationFrame(animId);
+    overlay.classList.remove('hidden');
+    overlay.querySelector('h2').textContent = 'GAME OVER';
+    overlayText.textContent = 'Your score: ' + score + '. Press Start to try again.';
+    startBtn.textContent = 'Play Again';
+    saveBest(score);
+
+    // Let the submission module (separate script below) know a run just finished.
+    window.dispatchEvent(new CustomEvent('kiterush:gameover', { detail: { score } }));
+  }
+
+  startBtn.addEventListener('click', ()=>{
+    startBtn.textContent = 'Play Again';
+    overlay.querySelector('h2').textContent = 'KITE RUSH';
+    startGame();
+  });
+
+  canvas.addEventListener('pointerdown', (e)=>{ e.preventDefault(); flap(); });
+  window.addEventListener('keydown', (e)=>{
+    if(e.code === 'Space'){ e.preventDefault(); flap(); }
+  });
+
+  function drawBackground(){
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, COLORS.sky1);
+    g.addColorStop(1, COLORS.sky2);
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.fillStyle = 'rgba(245,239,230,0.08)';
+    for(let i=0;i<18;i++){
+      const x = (i*53 + frame*0.4) % W;
+      const y = (i*97) % H;
+      ctx.beginPath();
+      ctx.arc(x,y,1.6,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  function drawGround(){
+    ctx.fillStyle = COLORS.ground;
+    ctx.fillRect(0, H-14, W, 14);
+  }
+
+  function drawPipes(){
+    pipes.forEach(p=>{
+      ctx.fillStyle = COLORS.pipe;
+      ctx.strokeStyle = COLORS.pipeEdge;
+      ctx.lineWidth = 3;
+      ctx.fillRect(p.x, 0, p.w, p.gapY);
+      ctx.strokeRect(p.x, 0, p.w, p.gapY);
+      const bottomY = p.gapY + p.gap;
+      ctx.fillRect(p.x, bottomY, p.w, H - bottomY - 14);
+      ctx.strokeRect(p.x, bottomY, p.w, H - bottomY - 14);
+    });
+  }
+
+  function drawKite(){
+    ribbonTrail.unshift({x:bird.x - bird.r*0.6, y:bird.y});
+    if(ribbonTrail.length > 14) ribbonTrail.pop();
+    ctx.strokeStyle = COLORS.ribbon;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ribbonTrail.forEach((pt,i)=>{
+      if(i===0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.globalAlpha = 0.5;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    const r = bird.r;
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    const angle = Math.max(-0.5, Math.min(0.9, bird.vy * 0.06));
+    ctx.rotate(angle);
+    ctx.fillStyle = COLORS.kite;
+    ctx.strokeStyle = COLORS.kiteEdge;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(0, -r*1.2);
+    ctx.lineTo(r, 0);
+    ctx.lineTo(0, r*1.2);
+    ctx.lineTo(-r, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawScore(){
+    ctx.font = '20px "Press Start 2P", monospace';
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.textAlign = 'center';
+    ctx.fillText(score, W/2+2, 46+2);
+    ctx.fillStyle = COLORS.cream || '#F5EFE6';
+    ctx.fillText(score, W/2, 46);
+  }
+
+  function update(){
+    frame++;
+
+    bird.vy += DIFFICULTY.gravity;
+    bird.y += bird.vy;
+
+    spawnTimer++;
+    if(spawnTimer >= DIFFICULTY.spawnEvery){
+      spawnTimer = 0;
+      spawnPipe();
+    }
+
+    pipes.forEach(pipe=>{ pipe.x -= DIFFICULTY.pipeSpeed; });
+    pipes = pipes.filter(pipe => pipe.x + pipe.w > -10);
+
+    for(const pipe of pipes){
+      if(!pipe.passed && pipe.x + pipe.w < bird.x){
+        pipe.passed = true;
+        score++;
+      }
+      const withinX = bird.x + bird.r > pipe.x && bird.x - bird.r < pipe.x + pipe.w;
+      if(withinX){
+        const hitsTop = bird.y - bird.r < pipe.gapY;
+        const hitsBottom = bird.y + bird.r > pipe.gapY + pipe.gap;
+        if(hitsTop || hitsBottom){
+          endGame();
+          return;
+        }
+      }
+    }
+
+    if(bird.y + bird.r > H - 14 || bird.y - bird.r < 0){
+      endGame();
+      return;
+    }
+  }
+
+  function loop(){
+    if(state !== 'playing') return;
+    update();
+    if(state !== 'playing') { render(); return; }
+    render();
+    animId = requestAnimationFrame(loop);
+  }
+
+  function render(){
+    drawBackground();
+    drawPipes();
+    drawKite();
+    drawGround();
+    drawScore();
+  }
+
+  function idlePreview(){
+    resetGame();
+    render();
+  }
+  idlePreview();
+
+  // Expose the qualifying threshold for the submission module below.
+  window.__KITE_RUSH_QUALIFY_SCORE = QUALIFY_SCORE;
+})();
+</script>
+
+<!-- ============================================================
+     LEADERBOARD SUBMISSION (Supabase)
+     Ganti SUPABASE_URL dan SUPABASE_ANON_KEY di bawah dengan
+     kredensial project Supabase kamu (Project Settings → API).
+     ============================================================ -->
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  const SUPABASE_URL = 'https://zutabzjcbhbstgnarlzs.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1dGFiempjYmhic3RnbmFybHpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjczNjUsImV4cCI6MjEwMzAwMzM2NX0.rhkjb4LBStv8o2fkla0ZbRQPc50ioEgInPZwHlKjkOw';
+  const GAME_NAME = 'kite-rush';
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const formEl = document.getElementById('scoreForm');
+  const walletInput = document.getElementById('walletInput');
+  const retweetInput = document.getElementById('retweetInput');
+  const formError = document.getElementById('formError');
+  const formStatus = document.getElementById('formStatus');
+  const submitBtn = document.getElementById('submitScoreBtn');
+  const skipBtn = document.getElementById('skipFormBtn');
+
+  let currentScore = 0;
+
+  window.addEventListener('kiterush:gameover', (e)=>{
+    currentScore = e.detail.score;
+    formError.textContent = '';
+    formStatus.textContent = '';
+    const qualifyScore = window.__KITE_RUSH_QUALIFY_SCORE || 50;
+    if(currentScore >= qualifyScore){
+      formEl.classList.remove('hidden');
+    } else {
+      formEl.classList.add('hidden');
+    }
+  });
+
+  skipBtn.addEventListener('click', ()=>{
+    formEl.classList.add('hidden');
+  });
+
+  function isValidWallet(addr){
+    return /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
+  }
+
+  function isValidRetweetUrl(url){
+    try{
+      const u = new URL(url.trim());
+      const host = u.hostname.replace('www.', '');
+      return (host === 'twitter.com' || host === 'x.com') && u.pathname.includes('/status/');
+    }catch(e){
+      return false;
+    }
+  }
+
+  submitBtn.addEventListener('click', async ()=>{
+    const wallet = walletInput.value.trim().toLowerCase();
+    const retweet = retweetInput.value.trim();
+    formError.textContent = '';
+    formStatus.textContent = '';
+
+    if(!isValidWallet(wallet)){
+      formError.textContent = 'Alamat wallet tidak valid (format 0x + 40 karakter hex).';
+      return;
+    }
+    if(!isValidRetweetUrl(retweet)){
+      formError.textContent = 'Link retweet tidak valid (harus link status di x.com/twitter.com).';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    skipBtn.disabled = true;
+    submitBtn.textContent = 'Mengirim...';
+
+    try{
+      const { data: existing, error: fetchErr } = await supabase
+        .from('scores')
+        .select('score')
+        .eq('wallet_address', wallet)
+        .eq('game', GAME_NAME)
+        .maybeSingle();
+
+      if(fetchErr) throw fetchErr;
+
+      if(existing && existing.score >= currentScore){
+        formStatus.textContent = 'Skor tersimpan kamu (' + existing.score + ') masih lebih tinggi. Tidak diupdate.';
+      } else if(existing){
+        const { error: updateErr } = await supabase
+          .from('scores')
+          .update({ score: currentScore, retweet_url: retweet })
+          .eq('wallet_address', wallet)
+          .eq('game', GAME_NAME);
+        if(updateErr) throw updateErr;
+        formStatus.textContent = 'Skor berhasil diupdate ke ' + currentScore + '!';
+      } else {
+        const { error: insertErr } = await supabase
+          .from('scores')
+          .insert({ wallet_address: wallet, retweet_url: retweet, game: GAME_NAME, score: currentScore });
+        if(insertErr) throw insertErr;
+        formStatus.textContent = 'Skor berhasil dikirim!';
+      }
+
+      const { data: top10, error: topErr } = await supabase
+        .from('scores')
+        .select('wallet_address, score')
+        .eq('game', GAME_NAME)
+        .order('score', { ascending: false })
+        .limit(10);
+
+      if(!topErr && top10){
+        const inTop10 = top10.some(row => row.wallet_address === wallet);
+        formStatus.textContent += inTop10
+          ? ' Masuk 10 besar leaderboard! 🎉'
+          : ' Belum masuk 10 besar saat ini.';
+        if(window.__kiteRushShowToast){
+          window.__kiteRushShowToast(inTop10 ? 'Masuk 10 besar leaderboard! 🎉' : 'Skor tersimpan, belum masuk 10 besar.');
+        }
+      }
+
+      setTimeout(()=>{ formEl.classList.add('hidden'); }, 1400);
+    }catch(err){
+      console.error(err);
+      formError.textContent = 'Gagal mengirim skor. Coba lagi sebentar.';
+    }finally{
+      submitBtn.disabled = false;
+      skipBtn.disabled = false;
+      submitBtn.textContent = 'Submit Skor';
+    }
+  });
+</script>
+</body>
+</html>
