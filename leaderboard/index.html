@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Leaderboard — Rushcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1F1533;
+    --panel: #2A1E45;
+    --panel-edge: #3B2A5E;
+    --marigold: #F2A93B;
+    --coral: #FF6B6B;
+    --mint: #7FE7C4;
+    --cream: #F5EFE6;
+    --muted: #B6ACC9;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      radial-gradient(circle at 20% 10%, rgba(242,169,59,0.10), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(127,231,196,0.08), transparent 45%),
+      var(--bg);
+    color:var(--cream);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:18px 14px 40px;
+  }
+  .backLink{
+    align-self:flex-start;
+    max-width:480px;
+    width:100%;
+    font-size:11px;
+    color:var(--muted);
+    text-decoration:none;
+    margin:0 auto 8px;
+  }
+  .backLink:hover{ color:var(--mint); }
+  h1{
+    font-family:'Press Start 2P', monospace;
+    font-size:16px;
+    letter-spacing:1px;
+    color:var(--marigold);
+    text-shadow:2px 2px 0 rgba(0,0,0,0.35);
+    margin:6px 0 4px;
+    text-align:center;
+  }
+  .tagline{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:18px;
+    text-align:center;
+    max-width:420px;
+  }
+
+  button, .btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    border:none;
+    border-radius:10px;
+    padding:10px 16px;
+    cursor:pointer;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  button:active, .btn:active{ transform:scale(0.96); }
+  .btn-primary{ background:var(--marigold); color:#1F1533; }
+  .btn-primary:hover{ filter:brightness(1.08); }
+
+  .walletBar{
+    width:100%;
+    max-width:480px;
+    background:var(--panel);
+    border:1.5px dashed var(--panel-edge);
+    border-radius:14px;
+    padding:14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .walletBar p{
+    font-size:11.5px;
+    color:var(--muted);
+    margin:0;
+    max-width:260px;
+  }
+
+  .prizeTable{
+    width:100%;
+    max-width:480px;
+    background:var(--panel);
+    border:1.5px solid var(--panel-edge);
+    border-radius:16px;
+    padding:8px 16px;
+    margin-bottom:24px;
+  }
+  .prizeRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:11px 0;
+    border-bottom:1px solid var(--panel-edge);
+  }
+  .prizeRow:last-child{ border-bottom:none; }
+  .rank{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+  }
+  .rank .medal{
+    width:26px;
+    height:26px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-family:'Press Start 2P', monospace;
+    background:rgba(242,169,59,0.14);
+    color:var(--marigold);
+  }
+  .prize{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    color:var(--mint);
+  }
+
+  .sectionLabel{
+    width:100%;
+    max-width:480px;
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:8px;
+  }
+
+  .board{
+    width:100%;
+    max-width:480px;
+    background:var(--panel);
+    border:1.5px dashed var(--panel-edge);
+    border-radius:16px;
+    overflow:hidden;
+  }
+  .boardHeader, .boardRow{
+    display:grid;
+    grid-template-columns:50px 1fr 90px;
+    align-items:center;
+    padding:10px 14px;
+    font-size:12px;
+  }
+  .boardHeader{
+    color:var(--muted);
+    font-size:11px;
+    border-bottom:1px solid var(--panel-edge);
+  }
+  .boardRow{ border-bottom:1px solid rgba(59,42,94,0.5); }
+  .boardRow:last-child{ border-bottom:none; }
+  .boardRow .player{ color:var(--cream); }
+  .boardRow .score{ text-align:right; color:var(--mint); font-weight:600; }
+  .empty{ color:var(--muted); }
+
+  .toast{
+    position:fixed;
+    bottom:16px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    color:var(--mint);
+    font-size:12px;
+    padding:8px 14px;
+    border-radius:10px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .toast.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+  <a class="backLink" href="../">← Back to Rushcade</a>
+  <h1>LEADERBOARD</h1>
+  <div class="tagline">Top scores across all Rushcade games. Prizes paid out in NFTs to the wallet on top when the season ends.</div>
+
+  <div class="walletBar">
+    <p>Connect your wallet to appear on the leaderboard and claim your NFT prize.</p>
+    <button class="btn btn-primary" id="connectBtn">Connect Wallet</button>
+  </div>
+
+  <div class="sectionLabel">Prize breakdown</div>
+  <div class="prizeTable">
+    <div class="prizeRow">
+      <div class="rank"><span class="medal">1</span> 1st place</div>
+      <div class="prize">$15</div>
+    </div>
+    <div class="prizeRow">
+      <div class="rank"><span class="medal">2</span> 2nd place</div>
+      <div class="prize">$10</div>
+    </div>
+    <div class="prizeRow">
+      <div class="rank"><span class="medal">3</span> 3rd place</div>
+      <div class="prize">$7</div>
+    </div>
+    <div class="prizeRow">
+      <div class="rank"><span class="medal">4-5</span> 4th – 5th place</div>
+      <div class="prize">$4</div>
+    </div>
+    <div class="prizeRow">
+      <div class="rank"><span class="medal">6-10</span> 6th – 10th place</div>
+      <div class="prize">$2</div>
+    </div>
+  </div>
+
+  <div class="sectionLabel">Top 10</div>
+  <div class="board">
+    <div class="boardHeader">
+      <span>#</span><span>Player</span><span style="text-align:right;">Score</span>
+    </div>
+    <div class="boardRow"><span class="empty">1</span><span class="empty">— connect wallet to load —</span><span class="empty">—</span></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const toastEl = document.getElementById('toast');
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+  }
+
+  document.getElementById('connectBtn').addEventListener('click', ()=>{
+    // TODO: hook up real MetaMask connection + on-chain leaderboard fetch
+    showToast('Wallet connection coming soon');
+  });
+</script>
+
+</body>
+</html>
